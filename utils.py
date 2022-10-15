@@ -204,8 +204,8 @@ def dropExistCombinations(FILE_PATH:str, ERROR_TXT_PATH:str, authorCombinations,
     # 排除在domain.csv中查詢過的作者
     originalCoAuthorDF = readCSV(FILE_PATH) # 查詢過的作者的df
     if originalCoAuthorDF is not None:
-        authorIDs1 = originalCoAuthorDF['AuthorID1'].to_list()
-        authorIDs2 = originalCoAuthorDF['AuthorID2'].to_list()
+        authorIDs1 = [str(x) for x in originalCoAuthorDF['AuthorID1'].to_list()]
+        authorIDs2 = [str(x) for x in originalCoAuthorDF['AuthorID2'].to_list()]
         existCombinations.extend(zip(authorIDs1, authorIDs2))
 
     dropIdx = []
