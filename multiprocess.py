@@ -84,4 +84,5 @@ def mpCrawler(ERROR_TXT_PATH, FILE_PATH, authorCombinations, searchError):
                 df.to_csv(FILE_PATH, index=False, encoding="UTF-8")
 
             driver.quit()
-        sleep(3)
+            sleep(3)
+            driver = webdriver.Chrome(options=options) # reset driver
