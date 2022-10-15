@@ -7,6 +7,7 @@ from tqdm import tqdm
 import re
 import pandas as pd
 import os
+from time import sleep
 
 from utils import writeMessageTxt, readCSV, dropExistCombinations
 
@@ -82,4 +83,5 @@ def mpCrawler(ERROR_TXT_PATH, FILE_PATH, authorCombinations, searchError):
             else:
                 df.to_csv(FILE_PATH, index=False, encoding="UTF-8")
 
-    driver.quit()
+            driver.quit()
+        sleep(3)
