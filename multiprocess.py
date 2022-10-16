@@ -72,17 +72,24 @@ def mpCrawler(ERROR_TXT_PATH, FILE_PATH, authorCombinations, searchError):
         resultBuffer['Num'].append(coArticleCount)
         ct+=1
 
-        if ct%100==0:
+        if ct%3==0:
             originalCoAuthorDF = readCSV(FILE_PATH)
             df = pd.DataFrame(resultBuffer)
             print(df)
-            resultBuffer=resultBuffer.fromkeys(resultBuffer, [])
+
             if originalCoAuthorDF is not None: # 若舊的存在，則合併舊檔案
                 newDF = pd.concat([originalCoAuthorDF, df], axis=0, ignore_index=True)
                 newDF.to_csv(FILE_PATH, index=False, encoding='UTF-8')
             else:
                 df.to_csv(FILE_PATH, index=False, encoding="UTF-8")
 
-            driver.quit()
-            sleep(3)
-            driver = webdriver.Chrome(options=options) # reset driver
+            # reset resultBuffer
+            resultBuffer = {
+                'AuthorName1': [],
+                'AuthorID1': [],
+                'AuthorName2': [],
+                'AuthorID2': [],
+                'Num': []
+            }
+
+    driver.quit()
