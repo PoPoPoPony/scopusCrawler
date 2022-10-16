@@ -72,7 +72,7 @@ def mpCrawler(ERROR_TXT_PATH, FILE_PATH, authorCombinations, searchError):
         resultBuffer['Num'].append(coArticleCount)
         ct+=1
 
-        if ct%3==0:
+        if ct%100==0:
             originalCoAuthorDF = readCSV(FILE_PATH)
             df = pd.DataFrame(resultBuffer)
             print(df)
