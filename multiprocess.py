@@ -97,7 +97,7 @@ def mpCrawler(ERROR_TXT_PATH, FILE_PATH, authorCombinations, searchError):
     driver.quit()
 
 
-def mpCrawlerViaAPI(ERROR_TXT_PATH, FILE_PATH, authorCombinations, searchError, ALL_API_KEYS):
+def mpCrawlerViaAPI(ERROR_TXT_PATH, FILE_PATH, authorCombinations, searchError, ALL_API_KEYS, processIdx):
     # 去除在以下兩個檔案中的combinations 
     # coAuthor/distribution/subProcess/error.txt
     # coAuthor/distribution/subProcess/coAuthor.csv
@@ -123,7 +123,7 @@ def mpCrawlerViaAPI(ERROR_TXT_PATH, FILE_PATH, authorCombinations, searchError, 
         'AuthorID2': [],
         'Num': []
     }
-    API_KEY_IDX = 0
+    API_KEY_IDX = processIdx
 
     for authorCombination in tqdm(authorCombinations):
         print(f" author1 : {authorCombination[0].originalName}, author2 : {authorCombination[1].originalName}")

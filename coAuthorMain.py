@@ -72,6 +72,22 @@ if __name__=='__main__':
             print("api.txt not found!")
             exit(0)
 
-        mpCrawlerViaAPI(ERROR_TXT_PATH, FILE_PATH, authorCombinations, args.searchError, ALL_API_KEYS)
+        authorCombinationsSets = np.array_split(authorCombinations, args.mpNum)
+        process_lst = []
+        manager = multiprocessing.Manager()
+        for i in range(args.mpNum):
+            SUB_PROCESS_FOLDER = f'{distributionFolder}/subProcess{i}'
+            if not os.path.exists(SUB_PROCESS_FOLDER):
+                os.mkdir(SUB_PROCESS_FOLDER)
+            SUB_PROCESS_ERROR_TXT_PATH = f'{SUB_PROCESS_FOLDER}/error.txt'
+            SUB_PROCESS_FILE_PATH = f'{SUB_PROCESS_FOLDER}/coAuthor.csv'
+            p = multiprocessing.Process(target=mpCrawlerViaAPI, args=(SUB_PROCESS_ERROR_TXT_PATH, SUB_PROCESS_FILE_PATH, authorCombinationsSets[i], args.searchError, ALL_API_KEYS, i))
+            process_lst.append(p)
+            p.start()
+
+        for i in range(args.mpNum):
+            process_lst[i].join()
+
+        # mpCrawlerViaAPI(ERROR_TXT_PATH, FILE_PATH, authorCombinations, args.searchError, ALL_API_KEYS)
 
 
