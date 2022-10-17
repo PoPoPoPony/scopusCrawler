@@ -9,6 +9,7 @@ import os
 from tqdm import tqdm
 import glob
 from typing import List
+import numpy as np
 
 
 def namePreProcess(fullName:str) -> Author:
@@ -198,37 +199,23 @@ def dropExistCombinations(FILE_PATH:str, ERROR_TXT_PATH:str, authorCombinations,
             with open(ERROR_TXT_PATH, mode='r', encoding="UTF-8") as f:
                 lines = f.readlines()
                 lines = [x[:-1] for x in lines] # 去除換行符號
-                for line in lines:
-                    existCombinations.append(line.split('!@!')) 
+                existCombinations.extend(lines)
 
     # 排除在domain.csv中查詢過的作者
     originalCoAuthorDF = readCSV(FILE_PATH) # 查詢過的作者的df
     if originalCoAuthorDF is not None:
-        authorIDs1 = [str(x) for x in originalCoAuthorDF['AuthorID1'].to_list()]
-        authorIDs2 = [str(x) for x in originalCoAuthorDF['AuthorID2'].to_list()]
-        existCombinations.extend(zip(authorIDs1, authorIDs2))
+        temp = originalCoAuthorDF.values.tolist()
+        for t in temp:
+            authorName1 = t[0]
+            authorID1 = t[1]
+            authorName2 = t[2]
+            authorID2 = t[3]
+            existCombinations.append(f"{authorName1}!@!{authorID1}@!@{authorName2}!@!{authorID2}")
 
-    dropIdx = []
-    print("remove exist combinations start!")
-    print(len(authorCombinations))
-    for existCombination in tqdm(existCombinations):
-        for i in range(len(authorCombinations)):
-            if authorCombinations[i][0].authorID == existCombination[0] and authorCombinations[i][1].authorID == existCombination[1]:
-                dropIdx.append(i)
-                break
-        if len(dropIdx) == len(existCombinations): # 全部都drop完
-            break
+    existCombinations = np.array(existCombinations)
+    authorCombinations = np.array(authorCombinations)
 
-    authorCombinations = [authorCombinations[i] for i in range(len(authorCombinations)) if i not in dropIdx]
-
-
-    # for existCombination in tqdm(existCombinations):
-    #     authorCombinations = [x for x in authorCombinations if x[0].authorID==existCombination[0] and x[1].authorID==existCombination[1]]
-
-    print("remove exist combinations complete!")
-    print(len(authorCombinations))
-
-
+    authorCombinations = authorCombinations[~np.isin(authorCombinations, existCombinations)]
     return authorCombinations
 
 
@@ -271,3 +258,15 @@ def collectSubFoldersData(ROOT_FILE_PATH:str):
 
         with open(f"{ROOT_FILE_PATH}/error.txt", mode='a', encoding='UTF-8') as f:
             f.writelines(errorLogs)
+
+
+def saveData(resultBuffer, FILE_PATH):
+    originalCoAuthorDF = readCSV(FILE_PATH)
+    df = pd.DataFrame(resultBuffer)
+    print(df)
+
+    if originalCoAuthorDF is not None: # 若舊的存在，則合併舊檔案
+        newDF = pd.concat([originalCoAuthorDF, df], axis=0, ignore_index=True)
+        newDF.to_csv(FILE_PATH, index=False, encoding='UTF-8')
+    else:
+        df.to_csv(FILE_PATH, index=False, encoding="UTF-8")

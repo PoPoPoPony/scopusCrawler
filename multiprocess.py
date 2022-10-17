@@ -9,14 +9,26 @@ import pandas as pd
 import os
 from time import sleep
 import requests
+from author import Author
 
-from utils import writeMessageTxt, readCSV, dropExistCombinations
+from utils import writeMessageTxt, readCSV, dropExistCombinations, saveData
 
 def mpCrawler(ERROR_TXT_PATH, FILE_PATH, authorCombinations, searchError):
     # 去除在以下兩個檔案中的combinations 
     # coAuthor/distribution/subProcess/error.txt
     # coAuthor/distribution/subProcess/coAuthor.csv
     authorCombinations = dropExistCombinations(FILE_PATH, ERROR_TXT_PATH, authorCombinations, searchError)
+    authorCombinations = authorCombinations.tolist()
+    for i in range(len(authorCombinations)):
+        authorNameAndID = authorCombinations[i].split("@!@")
+
+        author1Name, author1ID = authorNameAndID[0].split("!@!")
+        author1 = Author(authorID=author1ID, originalName=author1Name)
+        author2Name, author2ID = authorNameAndID[1].split("!@!")
+        author2 = Author(authorID=author2ID, originalName=author2Name)
+
+        authorCombinations[i] = [author1, author2]
+
 
     options=webdriver.ChromeOptions()
     options.add_argument('--ignore-certificate-errors')
@@ -36,9 +48,6 @@ def mpCrawler(ERROR_TXT_PATH, FILE_PATH, authorCombinations, searchError):
 
     for authorCombination in tqdm(authorCombinations):
         print(f" author1 : {authorCombination[0].originalName}, author2 : {authorCombination[1].originalName}")
-
-        # AU-ID(55701833100) AND AU-ID(56422845100)
-
         url = f"{searchPageBaseUrl}"
         driver.get(url)
 
@@ -55,7 +64,7 @@ def mpCrawler(ERROR_TXT_PATH, FILE_PATH, authorCombinations, searchError):
                 EC.presence_of_element_located((By.XPATH, '//*[@id="searchResFormId"]'))
             )
         except:
-            writeMessageTxt(ERROR_TXT_PATH, f"{authorCombination[0].authorID}!@!{authorCombination[1].authorID}")
+            writeMessageTxt(ERROR_TXT_PATH, f"{authorCombination[0].originalName}!@!{authorCombination[0].authorID}@!@{authorCombination[1].originalName}!@!{authorCombination[1].authorID}")
             print("documentHeader not found!")
             continue
 
@@ -74,15 +83,7 @@ def mpCrawler(ERROR_TXT_PATH, FILE_PATH, authorCombinations, searchError):
         ct+=1
 
         if ct%100==0:
-            originalCoAuthorDF = readCSV(FILE_PATH)
-            df = pd.DataFrame(resultBuffer)
-            print(df)
-
-            if originalCoAuthorDF is not None: # 若舊的存在，則合併舊檔案
-                newDF = pd.concat([originalCoAuthorDF, df], axis=0, ignore_index=True)
-                newDF.to_csv(FILE_PATH, index=False, encoding='UTF-8')
-            else:
-                df.to_csv(FILE_PATH, index=False, encoding="UTF-8")
+            saveData(resultBuffer, FILE_PATH)
 
             # reset resultBuffer
             resultBuffer = {
@@ -92,19 +93,27 @@ def mpCrawler(ERROR_TXT_PATH, FILE_PATH, authorCombinations, searchError):
                 'AuthorID2': [],
                 'Num': []
             }
-
+    saveData(resultBuffer, FILE_PATH)
     driver.quit()
 
 
-
-
-def mpCrawlerViaAPI(ERROR_TXT_PATH, FILE_PATH, authorCombinations, searchError):
+def mpCrawlerViaAPI(ERROR_TXT_PATH, FILE_PATH, authorCombinations, searchError, ALL_API_KEYS):
     # 去除在以下兩個檔案中的combinations 
     # coAuthor/distribution/subProcess/error.txt
     # coAuthor/distribution/subProcess/coAuthor.csv
-    # authorCombinations = dropExistCombinations(FILE_PATH, ERROR_TXT_PATH, authorCombinations, searchError)
+    authorCombinations = dropExistCombinations(FILE_PATH, ERROR_TXT_PATH, authorCombinations, searchError)
 
-    API_KEY = '25061a869d59f33bcd8df63aea742de1'
+    authorCombinations = authorCombinations.tolist()
+    for i in range(len(authorCombinations)):
+        authorNameAndID = authorCombinations[i].split("@!@")
+
+        author1Name, author1ID = authorNameAndID[0].split("!@!")
+        author1 = Author(authorID=author1ID, originalName=author1Name)
+        author2Name, author2ID = authorNameAndID[1].split("!@!")
+        author2 = Author(authorID=author2ID, originalName=author2Name)
+
+        authorCombinations[i] = [author1, author2]
+
     API_URL = 'https://api.elsevier.com/content/search/scopus'
 
     ct = 0
@@ -115,38 +124,43 @@ def mpCrawlerViaAPI(ERROR_TXT_PATH, FILE_PATH, authorCombinations, searchError):
         'AuthorID2': [],
         'Num': []
     }
+    dropCurrentAPI = False
+    API_KEY_IDX = 0
 
     for authorCombination in tqdm(authorCombinations):
         print(f" author1 : {authorCombination[0].originalName}, author2 : {authorCombination[1].originalName}")
 
+        API_KEY = ALL_API_KEYS[API_KEY_IDX]
         params = {
             'query': f"AU-ID({authorCombination[0].authorID}) AND AU-ID({authorCombination[1].authorID})",
-            'apiKey': API_KEY
+            'apiKey': API_KEY 
         }
 
-        retv =requests.get(API_URL, params=params)
+        retv=requests.get(API_URL, params=params)
 
-        print(retv)
-        exit(0)
+        try:
+            coArticleCount = retv.json()['search-results']['opensearch:totalResults']
+            if retv.headers['X-ELS-Status']!='OK':
+                raise Exception("Quote exceed!")
+        except:
+            writeMessageTxt(ERROR_TXT_PATH, f"{authorCombination[0].originalName}!@!{authorCombination[0].authorID}@!@{authorCombination[1].originalName}!@!{authorCombination[1].authorID}")
+            print("coArticleCount not found!")
+
+            API_KEY_IDX+=1
+            if API_KEY_IDX<=len(ALL_API_KEYS): # 判斷還有沒有API_KEY可以使用
+                continue
+            else:
+                break
 
         resultBuffer['AuthorName1'].append(authorCombination[0].originalName)
         resultBuffer['AuthorID1'].append(authorCombination[0].authorID)
         resultBuffer['AuthorName2'].append(authorCombination[1].originalName)
         resultBuffer['AuthorID2'].append(authorCombination[1].authorID)
         resultBuffer['Num'].append(coArticleCount)
+
         ct+=1
-
         if ct%100==0:
-            originalCoAuthorDF = readCSV(FILE_PATH)
-            df = pd.DataFrame(resultBuffer)
-            print(df)
-
-            if originalCoAuthorDF is not None: # 若舊的存在，則合併舊檔案
-                newDF = pd.concat([originalCoAuthorDF, df], axis=0, ignore_index=True)
-                newDF.to_csv(FILE_PATH, index=False, encoding='UTF-8')
-            else:
-                df.to_csv(FILE_PATH, index=False, encoding="UTF-8")
-
+            saveData(resultBuffer, FILE_PATH)
             # reset resultBuffer
             resultBuffer = {
                 'AuthorName1': [],
@@ -156,4 +170,4 @@ def mpCrawlerViaAPI(ERROR_TXT_PATH, FILE_PATH, authorCombinations, searchError):
                 'Num': []
             }
 
-    driver.quit()
+    saveData(resultBuffer, FILE_PATH)

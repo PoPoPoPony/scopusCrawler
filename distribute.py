@@ -1,3 +1,4 @@
+from matplotlib.backend_tools import AxisScaleBase
 from selenium import webdriver
 from time import sleep
 import csv
@@ -40,13 +41,15 @@ if __name__ == '__main__':
     domainDF = domainDF.iloc[:, :2].drop_duplicates().reset_index(drop=True) # 只取名字跟authorID
     originalNames = domainDF['OriginalName'].to_list()
     authorIDs = [str(x) for x in domainDF['AuthorID'].to_list()]
+
     for i in range(len(originalNames)):
-        author = Author(originalName=originalNames[i], authorID=authorIDs[i])
-        authors.append(author)
+        authors.append(f'{originalNames[i]}!@!{authorIDs[i]}')
 
     authorCombinations = []
     for subset in itertools.combinations(authors, 2):
-        authorCombinations.append(subset)
+        temp = '@!@'.join(subset)
+        authorCombinations.append(temp)
+
 
     # 去除在以下兩個檔案中的combinations 
     # coAuthor/error.txt
@@ -61,7 +64,7 @@ if __name__ == '__main__':
         os.mkdir(subsetPath)
 
         for authorCombination in authorCombinationsSets[i]:
-            data.append(f"{authorCombination[0].originalName}!@!{authorCombination[0].authorID}!@!{authorCombination[1].originalName}!@!{authorCombination[1].authorID}\n")
+            data.append(f"{authorCombination}\n")
         
         # write file
         filePath = f'coAuthor/distribution{i}/combinations.txt'
