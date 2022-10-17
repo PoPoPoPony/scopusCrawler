@@ -67,12 +67,11 @@ if __name__=='__main__':
             with open(API_KEYS_TXT_PATH, mode='r', encoding="UTF-8") as f:
                 lines = f.readlines()
                 lines = [x[:-1] for x in lines] # 去除換行符號
-                ALL_API_KEYS.append(lines)
+                ALL_API_KEYS.extend(lines)
         except FileNotFoundError:
             print("api.txt not found!")
             exit(0)
 
         mpCrawlerViaAPI(ERROR_TXT_PATH, FILE_PATH, authorCombinations, args.searchError, ALL_API_KEYS)
-
 
 

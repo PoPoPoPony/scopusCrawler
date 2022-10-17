@@ -115,7 +115,6 @@ def mpCrawlerViaAPI(ERROR_TXT_PATH, FILE_PATH, authorCombinations, searchError, 
         authorCombinations[i] = [author1, author2]
 
     API_URL = 'https://api.elsevier.com/content/search/scopus'
-
     ct = 0
     resultBuffer = {
         'AuthorName1': [],
@@ -124,11 +123,11 @@ def mpCrawlerViaAPI(ERROR_TXT_PATH, FILE_PATH, authorCombinations, searchError, 
         'AuthorID2': [],
         'Num': []
     }
-    dropCurrentAPI = False
     API_KEY_IDX = 0
 
     for authorCombination in tqdm(authorCombinations):
         print(f" author1 : {authorCombination[0].originalName}, author2 : {authorCombination[1].originalName}")
+        # print(f" author1 : {authorCombination[0].authorID}, author2 : {authorCombination[1].authorID}")
 
         API_KEY = ALL_API_KEYS[API_KEY_IDX]
         params = {
@@ -140,7 +139,7 @@ def mpCrawlerViaAPI(ERROR_TXT_PATH, FILE_PATH, authorCombinations, searchError, 
 
         try:
             coArticleCount = retv.json()['search-results']['opensearch:totalResults']
-            if retv.headers['X-ELS-Status']!='OK':
+            if retv.headers['X-RateLimit-Remaining']=='0':
                 raise Exception("Quote exceed!")
         except:
             writeMessageTxt(ERROR_TXT_PATH, f"{authorCombination[0].originalName}!@!{authorCombination[0].authorID}@!@{authorCombination[1].originalName}!@!{authorCombination[1].authorID}")
@@ -157,7 +156,6 @@ def mpCrawlerViaAPI(ERROR_TXT_PATH, FILE_PATH, authorCombinations, searchError, 
         resultBuffer['AuthorName2'].append(authorCombination[1].originalName)
         resultBuffer['AuthorID2'].append(authorCombination[1].authorID)
         resultBuffer['Num'].append(coArticleCount)
-        sleep(0.12)
 
         ct+=1
         if ct%100==0:
