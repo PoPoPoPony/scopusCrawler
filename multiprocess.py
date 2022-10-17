@@ -157,6 +157,7 @@ def mpCrawlerViaAPI(ERROR_TXT_PATH, FILE_PATH, authorCombinations, searchError, 
         resultBuffer['AuthorName2'].append(authorCombination[1].originalName)
         resultBuffer['AuthorID2'].append(authorCombination[1].authorID)
         resultBuffer['Num'].append(coArticleCount)
+        sleep(0.12)
 
         ct+=1
         if ct%100==0:
