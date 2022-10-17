@@ -8,6 +8,7 @@ import re
 import pandas as pd
 import os
 from time import sleep
+import requests
 
 from utils import writeMessageTxt, readCSV, dropExistCombinations
 
@@ -64,6 +65,69 @@ def mpCrawler(ERROR_TXT_PATH, FILE_PATH, authorCombinations, searchError):
             coArticleCount = re.sub(u"([^\u0030-\u0039])", "", coArticleCount)
         except:
             coArticleCount = '0'
+
+        resultBuffer['AuthorName1'].append(authorCombination[0].originalName)
+        resultBuffer['AuthorID1'].append(authorCombination[0].authorID)
+        resultBuffer['AuthorName2'].append(authorCombination[1].originalName)
+        resultBuffer['AuthorID2'].append(authorCombination[1].authorID)
+        resultBuffer['Num'].append(coArticleCount)
+        ct+=1
+
+        if ct%100==0:
+            originalCoAuthorDF = readCSV(FILE_PATH)
+            df = pd.DataFrame(resultBuffer)
+            print(df)
+
+            if originalCoAuthorDF is not None: # 若舊的存在，則合併舊檔案
+                newDF = pd.concat([originalCoAuthorDF, df], axis=0, ignore_index=True)
+                newDF.to_csv(FILE_PATH, index=False, encoding='UTF-8')
+            else:
+                df.to_csv(FILE_PATH, index=False, encoding="UTF-8")
+
+            # reset resultBuffer
+            resultBuffer = {
+                'AuthorName1': [],
+                'AuthorID1': [],
+                'AuthorName2': [],
+                'AuthorID2': [],
+                'Num': []
+            }
+
+    driver.quit()
+
+
+
+
+def mpCrawlerViaAPI(ERROR_TXT_PATH, FILE_PATH, authorCombinations, searchError):
+    # 去除在以下兩個檔案中的combinations 
+    # coAuthor/distribution/subProcess/error.txt
+    # coAuthor/distribution/subProcess/coAuthor.csv
+    # authorCombinations = dropExistCombinations(FILE_PATH, ERROR_TXT_PATH, authorCombinations, searchError)
+
+    API_KEY = '25061a869d59f33bcd8df63aea742de1'
+    API_URL = 'https://api.elsevier.com/content/search/scopus'
+
+    ct = 0
+    resultBuffer = {
+        'AuthorName1': [],
+        'AuthorID1': [],
+        'AuthorName2': [],
+        'AuthorID2': [],
+        'Num': []
+    }
+
+    for authorCombination in tqdm(authorCombinations):
+        print(f" author1 : {authorCombination[0].originalName}, author2 : {authorCombination[1].originalName}")
+
+        params = {
+            'query': f"AU-ID({authorCombination[0].authorID}) AND AU-ID({authorCombination[1].authorID})",
+            'apiKey': API_KEY
+        }
+
+        retv =requests.get(API_URL, params=params)
+
+        print(retv)
+        exit(0)
 
         resultBuffer['AuthorName1'].append(authorCombination[0].originalName)
         resultBuffer['AuthorID1'].append(authorCombination[0].authorID)

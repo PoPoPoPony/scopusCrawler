@@ -210,13 +210,24 @@ def dropExistCombinations(FILE_PATH:str, ERROR_TXT_PATH:str, authorCombinations,
 
     dropIdx = []
     print("remove exist combinations start!")
-    for i in tqdm(range(len(authorCombinations))):
-        for existCombination in existCombinations:
+    print(len(authorCombinations))
+    for existCombination in tqdm(existCombinations):
+        for i in range(len(authorCombinations)):
             if authorCombinations[i][0].authorID == existCombination[0] and authorCombinations[i][1].authorID == existCombination[1]:
                 dropIdx.append(i)
+                break
+        if len(dropIdx) == len(existCombinations): # 全部都drop完
+            break
 
     authorCombinations = [authorCombinations[i] for i in range(len(authorCombinations)) if i not in dropIdx]
+
+
+    # for existCombination in tqdm(existCombinations):
+    #     authorCombinations = [x for x in authorCombinations if x[0].authorID==existCombination[0] and x[1].authorID==existCombination[1]]
+
     print("remove exist combinations complete!")
+    print(len(authorCombinations))
+
 
     return authorCombinations
 
