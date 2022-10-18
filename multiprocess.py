@@ -146,7 +146,7 @@ def mpCrawlerViaAPI(ERROR_TXT_PATH, FILE_PATH, authorCombinations, searchError, 
             print("coArticleCount not found!")
 
             API_KEY_IDX+=1
-            if API_KEY_IDX<=len(ALL_API_KEYS): # 判斷還有沒有API_KEY可以使用
+            if API_KEY_IDX<len(ALL_API_KEYS): # 判斷還有沒有API_KEY可以使用
                 continue
             else:
                 break
