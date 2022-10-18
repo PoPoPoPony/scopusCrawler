@@ -97,7 +97,7 @@ def mpCrawler(ERROR_TXT_PATH, FILE_PATH, authorCombinations, searchError):
     driver.quit()
 
 
-def mpCrawlerViaAPI(ERROR_TXT_PATH, FILE_PATH, authorCombinations, searchError, ALL_API_KEYS, processIdx):
+def mpCrawlerViaAPI(ERROR_TXT_PATH, FILE_PATH, authorCombinations, searchError, ALL_API_KEYS, processIdx, exceedAPIs):
     # 去除在以下兩個檔案中的combinations 
     # coAuthor/distribution/subProcess/error.txt
     # coAuthor/distribution/subProcess/coAuthor.csv
@@ -140,6 +140,7 @@ def mpCrawlerViaAPI(ERROR_TXT_PATH, FILE_PATH, authorCombinations, searchError, 
         try:
             coArticleCount = retv.json()['search-results']['opensearch:totalResults']
             if retv.headers['X-RateLimit-Remaining']=='0':
+                exceedAPIs.append(API_KEY)
                 raise Exception("Quote exceed!")
         except:
             writeMessageTxt(ERROR_TXT_PATH, f"{authorCombination[0].originalName}!@!{authorCombination[0].authorID}@!@{authorCombination[1].originalName}!@!{authorCombination[1].authorID}")

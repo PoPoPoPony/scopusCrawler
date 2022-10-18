@@ -9,6 +9,8 @@ import multiprocessing
 import glob
 import pandas as pd
 import shutil
+import requests
+import json
 
 
 # 從domain.csv中的作者ID尋找合著數量
@@ -25,7 +27,6 @@ if __name__=='__main__':
     COMBINATIONS_FILE_PATH = f'{distributionFolder}/combinations.txt'
     ERROR_TXT_PATH = f'{distributionFolder}/error.txt'
     FILE_PATH = f'{distributionFolder}/coAuthor.csv'
-    API_KEYS_TXT_PATH = f'coAuthor/api.txt'
 
     collectSubFoldersData(ROOT_FILE_PATH=distributionFolder) # 收集所有distribution的資料
 
@@ -62,32 +63,32 @@ if __name__=='__main__':
         for i in range(args.mpNum):
             process_lst[i].join()
     else:
-        try:
-            ALL_API_KEYS = []
-            with open(API_KEYS_TXT_PATH, mode='r', encoding="UTF-8") as f:
-                lines = f.readlines()
-                lines = [x[:-1] for x in lines] # 去除換行符號
-                ALL_API_KEYS.extend(lines)
-        except FileNotFoundError:
-            print("api.txt not found!")
-            exit(0)
+
+        url = "https://script.google.com/macros/s/AKfycbz-xUKmN2GIfygrpkR57crj9U5MnaVlpFFay7f6RWbaVoT3iXwyUAG4RuxDW2x0RgWQ/exec"
+        retv = requests.get(url, params={'mode': 'read', 'sheetName': 'API'}).json()
+        ALL_API_KEYS = [x[0] for x in retv if x[1]=='OK']
 
         authorCombinationsSets = np.array_split(authorCombinations, args.mpNum)
         process_lst = []
         manager = multiprocessing.Manager()
+        exceedAPIs = manager.list()
         for i in range(args.mpNum):
             SUB_PROCESS_FOLDER = f'{distributionFolder}/subProcess{i}'
             if not os.path.exists(SUB_PROCESS_FOLDER):
                 os.mkdir(SUB_PROCESS_FOLDER)
             SUB_PROCESS_ERROR_TXT_PATH = f'{SUB_PROCESS_FOLDER}/error.txt'
             SUB_PROCESS_FILE_PATH = f'{SUB_PROCESS_FOLDER}/coAuthor.csv'
-            p = multiprocessing.Process(target=mpCrawlerViaAPI, args=(SUB_PROCESS_ERROR_TXT_PATH, SUB_PROCESS_FILE_PATH, authorCombinationsSets[i], args.searchError, ALL_API_KEYS, i))
+            p = multiprocessing.Process(target=mpCrawlerViaAPI, args=(
+                SUB_PROCESS_ERROR_TXT_PATH, SUB_PROCESS_FILE_PATH, authorCombinationsSets[i], args.searchError, ALL_API_KEYS, i, exceedAPIs))
             process_lst.append(p)
             p.start()
 
         for i in range(args.mpNum):
             process_lst[i].join()
 
-        # mpCrawlerViaAPI(ERROR_TXT_PATH, FILE_PATH, authorCombinations, args.searchError, ALL_API_KEYS)
-
-
+        data = retv
+        for d in data:
+            if d[0] in exceedAPIs:
+                d[1] = 'exceed'
+        data = json.dumps(data)
+        requests.get(url, params={'mode': 'write', 'sheetName': 'API', 'data': data})
