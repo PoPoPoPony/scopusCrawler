@@ -10,6 +10,7 @@ from tqdm import tqdm
 import glob
 from typing import List
 import numpy as np
+from math import floor
 
 
 def namePreProcess(fullName:str) -> Author:
@@ -207,15 +208,15 @@ def dropExistCombinations(FILE_PATH:str, ERROR_TXT_PATH:str, authorCombinations,
         temp = originalCoAuthorDF.values.tolist()
         for t in temp:
             authorName1 = t[0]
-            authorID1 = t[1]
+            authorID1 = str(floor(t[1])) # 不知道為啥讀csv都會變成浮點數
             authorName2 = t[2]
-            authorID2 = t[3]
+            authorID2 = str(floor(t[3]))
             existCombinations.append(f"{authorName1}!@!{authorID1}@!@{authorName2}!@!{authorID2}")
 
     existCombinations = np.array(existCombinations)
     authorCombinations = np.array(authorCombinations)
-
     authorCombinations = authorCombinations[~np.isin(authorCombinations, existCombinations)]
+
     return authorCombinations
 
 

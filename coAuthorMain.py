@@ -38,7 +38,7 @@ if __name__=='__main__':
     with open(COMBINATIONS_FILE_PATH, mode='r', encoding="UTF-8") as f:
         lines = f.readlines()
         lines = [x[:-1] for x in lines] # 去除換行符號
-        authorCombinations.append(lines)
+        authorCombinations.extend(lines)
 
     # 去除在以下兩個檔案中的combinations 
     # coAuthor/distribution/error.txt
