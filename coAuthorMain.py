@@ -64,7 +64,7 @@ if __name__=='__main__':
             process_lst[i].join()
     else:
 
-        url = "https://script.google.com/macros/s/AKfycbz-xUKmN2GIfygrpkR57crj9U5MnaVlpFFay7f6RWbaVoT3iXwyUAG4RuxDW2x0RgWQ/exec"
+        url = 'https://script.google.com/macros/s/AKfycbw47Ndbyxslmrfj9rtdyM0cPN1XPRElryzSpbJZXrkBnHI8UTAn2Xpc9BjG5HYXJC3B/exec'
         retv = requests.get(url, params={'mode': 'read', 'sheetName': 'API'}).json()
         ALL_API_KEYS = [x[0] for x in retv if x[1]=='OK']
 
