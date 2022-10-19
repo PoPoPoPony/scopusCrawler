@@ -86,9 +86,20 @@ if __name__=='__main__':
         for i in range(args.mpNum):
             process_lst[i].join()
 
-        data = retv
-        for d in data:
-            if d[0] in exceedAPIs:
-                d[1] = 'exceed'
-        data = json.dumps(data)
-        requests.get(url, params={'mode': 'write', 'sheetName': 'API', 'data': data})
+        data = []
+        startIdx = 0
+        print("update API_KEY status start!")
+        for i in tqdm(range(len(retv))):
+            if retv[i][0] in exceedAPIs:
+                data.append([retv[i][0], 'exceed'])
+            else:
+                data.append([retv[i][0], 'OK'])
+            if (i+1) % 10 == 0:
+                data = json.dumps(data)
+                t = requests.get(url, params={'mode': 'write', 'sheetName': 'test', 'data': data, 'startIdx': startIdx})
+                data = []
+                startIdx += 10
+        else:
+            data = json.dumps(data)
+            t = requests.get(url, params={'mode': 'write', 'sheetName': 'test', 'data': data, 'startIdx': startIdx})
+        print("update API_KEY status complete!")
