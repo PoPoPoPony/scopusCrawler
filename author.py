@@ -23,4 +23,4 @@ class Author:
 
     def setDomain(self, domain:str, num:str):
         num = eval(num.replace(',', ''))
-        self.domain[domain] = self.article.setdefault(domain, 0)+num
+        self.domain[domain] = self.domain.setdefault(domain, 0)+num
